@@ -11,11 +11,12 @@ describe('windows launcher entry', () => {
       port: 3000,
       externalMode: true,
       openCodeHost: 'http://127.0.0.1:4095',
+      openCodeGuidance: '',
     });
 
     assert.equal(
       line,
-      'OPENCHAMBER_LAUNCH_RESULT={"action":"reused","host":"127.0.0.1","port":3000,"url":"http://127.0.0.1:3000","externalMode":true,"openCodeHost":"http://127.0.0.1:4095"}',
+      'OPENCHAMBER_LAUNCH_RESULT={"action":"reused","host":"127.0.0.1","port":3000,"url":"http://127.0.0.1:3000","externalMode":true,"openCodeHost":"http://127.0.0.1:4095","openCodeGuidance":""}',
     );
   });
 
@@ -31,6 +32,29 @@ describe('windows launcher entry', () => {
       } else {
         process.env.OPENCODE_HOST = previous;
       }
+    }
+  });
+
+  it('returns not configured when no OpenCode host is available', () => {
+    const previousHost = process.env.OPENCODE_HOST;
+    const previousPort = process.env.OPENCODE_PORT;
+
+    delete process.env.OPENCODE_HOST;
+    delete process.env.OPENCODE_PORT;
+
+    try {
+      assert.equal(resolveOpenCodeHostSummary(), 'not configured');
+      const line = formatLaunchSummaryLine({
+        action: 'launched',
+        host: '127.0.0.1',
+        port: 3000,
+      });
+      assert.match(line, /"openCodeGuidance":"Configure OPENCODE_HOST or use the web UI settings after launch"/);
+    } finally {
+      if (previousHost === undefined) delete process.env.OPENCODE_HOST;
+      else process.env.OPENCODE_HOST = previousHost;
+      if (previousPort === undefined) delete process.env.OPENCODE_PORT;
+      else process.env.OPENCODE_PORT = previousPort;
     }
   });
 });

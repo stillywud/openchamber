@@ -424,7 +424,7 @@ function buildCmdLauncher() {
     ')',
     `for /f "usebackq tokens=1,2 delims=|" %%A in (powershell -NoProfile -Command "$json=((Get-Content -Path '%LOG_FILE%' | Select-String '^OPENCHAMBER_LAUNCH_RESULT=').Line | Select-Object -Last 1) -replace '^OPENCHAMBER_LAUNCH_RESULT=',''; $data=$json | ConvertFrom-Json; Write-Output ($data.action + '|' + $data.url)") do (set "RESULT_ACTION=%%A" & set "RESULT_URL=%%B")`.replaceAll('', '`'),
     'echo Mode: %RESULT_ACTION%',
-    `powershell -NoProfile -Command "$json=((Get-Content -Path '%LOG_FILE%' | Select-String '^OPENCHAMBER_LAUNCH_RESULT=').Line | Select-Object -Last 1) -replace '^OPENCHAMBER_LAUNCH_RESULT=',''; $data=$json | ConvertFrom-Json; $mode = if ($data.externalMode) { 'external-opencode' } else { 'managed-opencode' }; Write-Host ('OpenCode mode: ' + $mode); Write-Host ('OpenCode host: ' + $data.openCodeHost)"`,
+    `powershell -NoProfile -Command "$json=((Get-Content -Path '%LOG_FILE%' | Select-String '^OPENCHAMBER_LAUNCH_RESULT=').Line | Select-Object -Last 1) -replace '^OPENCHAMBER_LAUNCH_RESULT=',''; $data=$json | ConvertFrom-Json; $mode = if ($data.externalMode) { 'external-opencode' } else { 'managed-opencode' }; Write-Host ('OpenCode mode: ' + $mode); Write-Host ('OpenCode host: ' + $data.openCodeHost); if ($data.openCodeGuidance) { Write-Host ('Hint: ' + $data.openCodeGuidance) }"`,
     'echo URL:  %RESULT_URL%',
     'echo Log:  %LOG_FILE%',
     'exit /b 0',

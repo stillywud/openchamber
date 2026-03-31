@@ -45,13 +45,17 @@ function resolveOpenCodeHostSummary() {
 }
 
 function formatLaunchSummaryLine(result) {
+  const resolvedHost = result.openCodeHost ?? resolveOpenCodeHostSummary();
   const summary = {
     action: result.action,
     host: result.host,
     port: result.port,
     url: `http://${result.host}:${result.port}`,
     externalMode: result.externalMode ?? true,
-    openCodeHost: result.openCodeHost ?? resolveOpenCodeHostSummary(),
+    openCodeHost: resolvedHost,
+    openCodeGuidance: resolvedHost === 'not configured'
+      ? 'Configure OPENCODE_HOST or use the web UI settings after launch'
+      : '',
   };
 
   return `OPENCHAMBER_LAUNCH_RESULT=${JSON.stringify(summary)}`;
