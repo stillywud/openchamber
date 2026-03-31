@@ -25,12 +25,33 @@ function readOptionalPort() {
   return Number.isFinite(port) && port > 0 ? port : undefined;
 }
 
+function resolveOpenCodeHostSummary() {
+  const explicitHost = process.env.OPENCODE_HOST?.trim();
+  if (explicitHost && explicitHost !== 'http://127.0.0.1:1') {
+    const matchedUrl = explicitHost.match(/https?:\/\/[^\s&]+/i);
+    if (matchedUrl) {
+      return matchedUrl[0];
+    }
+
+    return explicitHost;
+  }
+
+  const explicitPort = process.env.OPENCODE_PORT?.trim();
+  if (explicitPort) {
+    return `http://127.0.0.1:${explicitPort}`;
+  }
+
+  return 'not configured';
+}
+
 function formatLaunchSummaryLine(result) {
   const summary = {
     action: result.action,
     host: result.host,
     port: result.port,
     url: `http://${result.host}:${result.port}`,
+    externalMode: result.externalMode ?? true,
+    openCodeHost: result.openCodeHost ?? resolveOpenCodeHostSummary(),
   };
 
   return `OPENCHAMBER_LAUNCH_RESULT=${JSON.stringify(summary)}`;
@@ -58,4 +79,4 @@ if (isMainModule) {
   });
 }
 
-export { formatLaunchSummaryLine };
+export { formatLaunchSummaryLine, resolveOpenCodeHostSummary };
