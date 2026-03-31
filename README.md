@@ -89,6 +89,22 @@
 ### **Desktop (macOS)**
 Download from [Releases](https://github.com/btriapitsyn/openchamber/releases).
 
+### **Desktop (Windows)**
+Download the single EXE from [Releases](https://github.com/btriapitsyn/openchamber/releases). The Windows package bundles the OpenChamber web runtime only — it requires an external OpenCode server. Point OpenChamber at your OpenCode instance using environment variables:
+
+```cmd
+set OPENCODE_SKIP_START=true
+openchamber.exe --port 3000
+```
+
+Or connect to a remote OpenCode server:
+
+```cmd
+set OPENCODE_HOST=http://your-opencode-host:4095
+set OPENCODE_SKIP_START=true
+openchamber.exe --port 3000
+```
+
 ### **VS Code**
 Install from [Marketplace](https://marketplace.visualstudio.com/items?itemName=fedaykindev.openchamber) or search "OpenChamber" in Extensions.
 

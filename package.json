@@ -59,7 +59,10 @@
     "release:prepare": "bun run build && bun run type-check && bun run lint",
     "release:test": "./scripts/test-release-build.sh",
     "release:test:intel": "./scripts/test-release-build.sh x86_64",
-    "release:test:arm": "./scripts/test-release-build.sh aarch64"
+    "release:test:arm": "./scripts/test-release-build.sh aarch64",
+    "build:windows-exe": "node scripts/build-windows-exe.mjs",
+    "build:windows-exe:stage": "node scripts/build-windows-exe.mjs --stage-only",
+    "build:windows-exe:verify": "node scripts/build-windows-exe.mjs --stage-only --verify-staged-runtime"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.0",

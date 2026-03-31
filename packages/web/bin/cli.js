@@ -75,6 +75,8 @@ const ANSI = {
   unbold: '\x1b[22m',
 };
 
+const IS_PACKAGED_RUNTIME = isTruthyEnv(process.env.OPENCHAMBER_PACKAGED_RUNTIME);
+
 // Browser-unsafe ports (Fetch/Chromium restricted ports).
 const UNSAFE_BROWSER_PORTS = new Set([
   0, 1, 7, 9, 11, 13, 15, 17, 19, 20, 21, 22, 23, 25, 37, 42, 43, 53, 69,
@@ -2729,7 +2731,27 @@ const commands = {
       }
     }
 
-    const opencodeBinary = await checkOpenCodeCLI(emitNotice);
+    // In packaged runtime mode, bypass OpenCode CLI lookup and skip starting embedded OpenCode
+    const opencodeBinary = IS_PACKAGED_RUNTIME
+      ? null
+      : await checkOpenCodeCLI(emitNotice);
+
+    // Force skip OpenCode start when in packaged runtime mode (equivalent to OPENCODE_SKIP_START=true)
+    // Also set OPENCODE_HOST to a placeholder to prevent server from attempting to start OpenCode
+    if (IS_PACKAGED_RUNTIME) {
+      if (!process.env.OPENCODE_SKIP_START) {
+        process.env.OPENCHAMBER_SKIP_OPENCODE_START = 'true';
+      }
+      // Set a placeholder host to trigger skip-start mode without requiring an actual external server
+      // The server will enter external OpenCode mode but there's no actual server to connect to
+      // Override any invalid existing OPENCODE_HOST value in packaged mode
+      const existingHost = process.env.OPENCODE_HOST?.trim();
+      const hasValidHost = existingHost && (existingHost.startsWith('http://') || existingHost.startsWith('https://'));
+      if (!hasValidHost && !process.env.OPENCODE_PORT) {
+        process.env.OPENCODE_HOST = 'http://127.0.0.1:1';
+      }
+    }
+
     const serverPath = path.join(__dirname, '..', 'server', 'index.js');
     const preferredRuntime = getPreferredServerRuntime();
     const runtimeBin = preferredRuntime === 'bun' ? BUN_BIN : process.execPath;
@@ -2889,10 +2911,13 @@ const commands = {
       env: {
         ...process.env,
         OPENCHAMBER_PORT: String(targetPort),
-        OPENCODE_BINARY: opencodeBinary,
+        ...(opencodeBinary ? { OPENCODE_BINARY: opencodeBinary } : {}),
         ...(effectiveHost ? { OPENCHAMBER_HOST: effectiveHost } : {}),
         ...(effectiveUiPassword ? { OPENCHAMBER_UI_PASSWORD: effectiveUiPassword } : {}),
         ...(process.env.OPENCODE_SKIP_START ? { OPENCHAMBER_SKIP_OPENCODE_START: process.env.OPENCODE_SKIP_START } : {}),
+        ...(IS_PACKAGED_RUNTIME ? { OPENCHAMBER_SKIP_OPENCODE_START: 'true' } : {}),
+        // For packaged mode, set placeholder host to prevent server from starting OpenCode
+        ...(IS_PACKAGED_RUNTIME && !process.env.OPENCODE_HOST && !process.env.OPENCODE_PORT ? { OPENCODE_HOST: 'http://127.0.0.1:1' } : {}),
       },
     });
 
@@ -4607,6 +4632,21 @@ const commands = {
   async update(options = {}) {
     const showOutput = shouldRenderHumanOutput(options);
     const updateSpin = createSpinner(options);
+
+    // Packaged runtime mode: updates are delivered via new EXE downloads
+    if (IS_PACKAGED_RUNTIME) {
+      const message = 'Updates are delivered by downloading a new OpenChamber EXE. Please download the latest version from the releases page.';
+      if (isJsonMode(options)) {
+        printJson({
+          status: 'error',
+          error: { message },
+          code: 'PACKAGED_RUNTIME_UPDATE_NOT_SUPPORTED',
+        });
+      } else {
+        console.log(message);
+      }
+      process.exit(EXIT_CODE.GENERAL_ERROR);
+    }
 
     const packageManagerPath = path.join(__dirname, '..', 'server', 'lib', 'package-manager.js');
     const {
