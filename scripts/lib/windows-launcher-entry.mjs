@@ -7,6 +7,7 @@ import { launchRuntime } from './windows-bootstrap.mjs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const bundleRoot = path.resolve(__dirname, '..', '..');
+const isMainModule = process.argv[1] && path.resolve(process.argv[1]) === __filename;
 
 async function readManifest() {
   const manifestPath = path.join(bundleRoot, 'payload-manifest.json');
@@ -24,6 +25,17 @@ function readOptionalPort() {
   return Number.isFinite(port) && port > 0 ? port : undefined;
 }
 
+function formatLaunchSummaryLine(result) {
+  const summary = {
+    action: result.action,
+    host: result.host,
+    port: result.port,
+    url: `http://${result.host}:${result.port}`,
+  };
+
+  return `OPENCHAMBER_LAUNCH_RESULT=${JSON.stringify(summary)}`;
+}
+
 async function main() {
   const manifest = await readManifest();
   const result = await launchRuntime(bundleRoot, manifest, {
@@ -36,15 +48,14 @@ async function main() {
     throw new Error(result.error || 'Failed to launch OpenChamber packaged runtime');
   }
 
-  if (result.action === 'reused') {
-    console.log(`Reused existing OpenChamber instance on http://${result.host}:${result.port}`);
-    return;
-  }
-
-  console.log(`OpenChamber is ready on http://${result.host}:${result.port}`);
+  console.log(formatLaunchSummaryLine(result));
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exit(1);
-});
+if (isMainModule) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  });
+}
+
+export { formatLaunchSummaryLine };

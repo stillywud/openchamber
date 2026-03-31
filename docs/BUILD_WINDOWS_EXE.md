@@ -5,7 +5,7 @@ This guide covers how to build the OpenChamber Windows single EXE package locall
 For end users, the packaged bundle now includes two Windows launchers at the bundle root:
 
 - `OpenChamber.vbs` - recommended double-click launcher with no visible console window
-- `OpenChamber.cmd` - fallback launcher that is easier to inspect while troubleshooting
+- `OpenChamber.cmd` - fallback launcher that shows a short startup summary and writes detailed logs to `OpenChamber.log`
 
 ## What Is Bundled
 
@@ -85,6 +85,13 @@ bun run build:windows-exe:verify
 - **EXE bundle**: `dist/bundles/openchamber-{version}-windows-x64.zip`
 
 After extracting the zip on Windows, users should double-click `OpenChamber.vbs`.
+
+If they launch `OpenChamber.cmd` manually, it prints:
+
+- the bundle root
+- the startup mode (`launched` or `reused`)
+- the local browser URL
+- the log file path
 
 ### Environment Variables (Optional)
 
