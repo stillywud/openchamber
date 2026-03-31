@@ -116,10 +116,17 @@ async function shouldSuppressBrowserOpen(version, suppressionWindowMs = DEFAULT_
 }
 
 function openBrowser(url) {
-  const commandName = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
-  const args = process.platform === 'win32' ? ['', url] : [url];
-  
-  spawn(commandName, args, {
+  if (process.platform === 'win32') {
+    spawn('cmd.exe', ['/c', 'start', '', url], {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true,
+    }).unref();
+    return;
+  }
+
+  const commandName = process.platform === 'darwin' ? 'open' : 'xdg-open';
+  spawn(commandName, [url], {
     detached: true,
     stdio: 'ignore',
     windowsHide: true,

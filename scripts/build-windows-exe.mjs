@@ -19,6 +19,10 @@ const webDir = path.join(repoRoot, 'packages', 'web');
 const webDistDir = path.join(webDir, 'dist');
 const defaultStageDir = path.join(os.tmpdir(), 'openchamber-windows-runtime-stage');
 const defaultOutputDir = path.join(repoRoot, 'dist');
+const launcherSupportFiles = [
+  'scripts/lib/windows-bootstrap.mjs',
+  'scripts/lib/windows-launcher-entry.mjs',
+];
 
 function createRequireFromWeb() {
   return createRequire(path.join(webDir, 'package.json'));
@@ -367,6 +371,59 @@ async function createExeBundle(stageDir, outputDir, version) {
   return bundlePath;
 }
 
+async function stageLauncherSupportFiles(stageDir) {
+  for (const relativePath of launcherSupportFiles) {
+    const sourcePath = path.join(repoRoot, relativePath);
+    const targetPath = path.join(stageDir, relativePath);
+    await fs.mkdir(path.dirname(targetPath), { recursive: true });
+    await fs.copyFile(sourcePath, targetPath);
+  }
+}
+
+function buildCmdLauncher() {
+  return [
+    '@echo off',
+    'setlocal',
+    'set "SCRIPT_DIR=%~dp0"',
+    'set "BUN_EXE=%SCRIPT_DIR%bun.exe"',
+    'set "MANIFEST_FILE=%SCRIPT_DIR%payload-manifest.json"',
+    'set "LAUNCHER_FILE=%SCRIPT_DIR%scripts\\lib\\windows-launcher-entry.mjs"',
+    '',
+    'if not exist "%BUN_EXE%" (',
+    '  echo Missing bun.exe in package root.',
+    '  exit /b 1',
+    ')',
+    '',
+    'if not exist "%MANIFEST_FILE%" (',
+    '  echo Missing payload-manifest.json in package root.',
+    '  exit /b 1',
+    ')',
+    '',
+    'if not exist "%LAUNCHER_FILE%" (',
+    '  echo Missing launcher entry script in package root.',
+    '  exit /b 1',
+    ')',
+    '',
+    'set "OPENCHAMBER_PACKAGED_RUNTIME=true"',
+    'start "OpenChamber" /min "%BUN_EXE%" "%LAUNCHER_FILE%"',
+    'exit /b 0',
+    '',
+  ].join('\r\n');
+}
+
+function buildVbsLauncher() {
+  return [
+    'Set shell = CreateObject("WScript.Shell")',
+    'scriptDir = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName)',
+    'shell.Run Chr(34) & scriptDir & "\\OpenChamber.cmd" & Chr(34), 0, False',
+  ].join('\r\n');
+}
+
+async function stageWindowsLaunchers(stageDir) {
+  await fs.writeFile(path.join(stageDir, 'OpenChamber.cmd'), buildCmdLauncher(), 'utf8');
+  await fs.writeFile(path.join(stageDir, 'OpenChamber.vbs'), buildVbsLauncher(), 'utf8');
+}
+
 async function main() {
   const options = parseArgs();
   const bunBinary = await resolveBunBinary();
@@ -378,6 +435,9 @@ async function main() {
     repoRoot,
     outputDir: options.outputDir,
   });
+
+  await stageLauncherSupportFiles(stage.stageDir);
+  await stageWindowsLaunchers(stage.stageDir);
 
   const manifest = buildPayloadManifest({
     version,

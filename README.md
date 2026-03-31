@@ -90,11 +90,13 @@
 Download from [Releases](https://github.com/btriapitsyn/openchamber/releases).
 
 ### **Desktop (Windows)**
-Download the single EXE from [Releases](https://github.com/btriapitsyn/openchamber/releases). The Windows package bundles the OpenChamber web runtime only — it requires an external OpenCode server. Point OpenChamber at your OpenCode instance using environment variables:
+Download the Windows bundle from [Releases](https://github.com/btriapitsyn/openchamber/releases), extract it, then double-click `OpenChamber.vbs`. The bundle includes the OpenChamber web runtime only — it still requires an external OpenCode server.
+
+If you want to preconfigure the connection before launch, point OpenChamber at your OpenCode instance using environment variables:
 
 ```cmd
 set OPENCODE_SKIP_START=true
-openchamber.exe --port 3000
+OpenChamber.cmd
 ```
 
 Or connect to a remote OpenCode server:
@@ -102,7 +104,7 @@ Or connect to a remote OpenCode server:
 ```cmd
 set OPENCODE_HOST=http://your-opencode-host:4095
 set OPENCODE_SKIP_START=true
-openchamber.exe --port 3000
+OpenChamber.cmd
 ```
 
 ### **VS Code**

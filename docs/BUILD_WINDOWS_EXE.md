@@ -2,6 +2,11 @@
 
 This guide covers how to build the OpenChamber Windows single EXE package locally.
 
+For end users, the packaged bundle now includes two Windows launchers at the bundle root:
+
+- `OpenChamber.vbs` - recommended double-click launcher with no visible console window
+- `OpenChamber.cmd` - fallback launcher that is easier to inspect while troubleshooting
+
 ## What Is Bundled
 
 The Windows EXE bundles the **OpenChamber web runtime** — the UI, server, and all client-side components needed to run OpenChamber in a browser.
@@ -78,6 +83,8 @@ bun run build:windows-exe:verify
 
 - **Staged runtime**: `{temp}/openchamber-windows-runtime-stage/`
 - **EXE bundle**: `dist/bundles/openchamber-{version}-windows-x64.zip`
+
+After extracting the zip on Windows, users should double-click `OpenChamber.vbs`.
 
 ### Environment Variables (Optional)
 
