@@ -229,6 +229,31 @@ async function findExistingInstance(targetPort) {
   return null;
 }
 
+async function handleExistingInstanceReuse({
+  existing,
+  runtimeVersion,
+  shouldOpenBrowser,
+  openBrowserImpl = openBrowser,
+  shouldSuppressBrowserOpenImpl = shouldSuppressBrowserOpen,
+  updateLastBrowserOpenAtImpl = updateLastBrowserOpenAt,
+}) {
+  if (shouldOpenBrowser) {
+    const suppressBrowserOpen = await shouldSuppressBrowserOpenImpl(runtimeVersion);
+    if (!suppressBrowserOpen) {
+      const browserUrl = `http://${existing.host}:${existing.port}`;
+      openBrowserImpl(browserUrl);
+      await updateLastBrowserOpenAtImpl(runtimeVersion);
+    }
+  }
+
+  return {
+    action: 'reused',
+    port: existing.port,
+    host: existing.host,
+    message: 'Reused existing healthy instance',
+  };
+}
+
 async function launchRuntime(runtimePath, manifest, options = {}) {
   const {
     port,
@@ -243,12 +268,11 @@ async function launchRuntime(runtimePath, manifest, options = {}) {
     const existing = await findExistingInstance(port);
     if (existing) {
       if (existing.isHealthy) {
-        return {
-          action: 'reused',
-          port: existing.port,
-          host: existing.host,
-          message: 'Reused existing healthy instance',
-        };
+        return handleExistingInstanceReuse({
+          existing,
+          runtimeVersion,
+          shouldOpenBrowser,
+        });
       }
     }
   }
@@ -334,6 +358,7 @@ export {
   getPackagedRuntimeInstallPath,
   getRuntimeStateDir,
   getVersionedRuntimePath,
+  handleExistingInstanceReuse,
   launchRuntime,
   openBrowser,
   readRuntimeState,
